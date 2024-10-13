@@ -1,0 +1,75 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: bookings-ms
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      dialect: org.hibernate.dialect.MySQLDialect
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
+    consumer:
+      group-id: bookings-ms
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+    producer:
+      retries: 1
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    topics:
+      REVIEW_CREATED_TOPIC: REVIEW_CREATED_TOPIC
+      BOOKING_CREATED_TOPIC: BOOKING_CREATED_TOPIC
+      BOOKING_RECEIPT_GENERATED_TOPIC: BOOKING_RECEIPT_GENERATED_TOPIC
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring-application.instance_id:${random.value}}
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${EUREKA_HOST}:${EUREKA_PORT}/eureka/
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      users-service:
+        register-health-indicator: true
+        sliding-window-size: 5
+        sliding-window-type: count_based
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        automatic-transition-from-open-to-half-open-enabled: true
+        permitted-number-of-calls-in-half-open-state: 3
+        ignored-exceptions:
+          - feign.FeignException$FeignClientException
+      rooms-service:
+        register-health-indicator: true
+        sliding-window-size: 5
+        sliding-window-type: count_based
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        automatic-transition-from-open-to-half-open-enabled: true
+        permitted-number-of-calls-in-half-open-state: 3
+        ignored-exceptions:
+          - feign.FeignException$FeignClientException
+
+springdoc:
+  swagger-ui:
+    path: /api/bookings/swagger-ui.html
+  api-docs:
+    path: /api/bookings/v3/api-docs
+
+com:
+  amazonaws:
+    xray:
+      emitters:
+        daemon-address: 127.0.0.1:2000
