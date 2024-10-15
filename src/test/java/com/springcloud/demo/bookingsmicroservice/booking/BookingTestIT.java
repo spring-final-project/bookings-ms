@@ -67,8 +67,8 @@ public class BookingTestIT {
                 .builder()
                 .checkIn(LocalDateTime.now().plusDays(1))
                 .checkOut(LocalDateTime.now().plusDays(3))
-                .userId(UUID.randomUUID().toString())
-                .roomId(UUID.randomUUID().toString())
+                .userId(UUID.randomUUID())
+                .roomId(UUID.randomUUID())
                 .status(BookingStatus.BOOKED)
                 .build();
 
@@ -76,8 +76,8 @@ public class BookingTestIT {
                 .builder()
                 .checkIn(LocalDateTime.now().plusDays(4))
                 .checkOut(LocalDateTime.now().plusDays(7))
-                .userId(UUID.randomUUID().toString())
-                .roomId(UUID.randomUUID().toString())
+                .userId(UUID.randomUUID())
+                .roomId(UUID.randomUUID())
                 .status(BookingStatus.BOOKED)
                 .build();
 
@@ -85,8 +85,8 @@ public class BookingTestIT {
                 .builder()
                 .checkIn(LocalDateTime.now().minusDays(4))
                 .checkOut(LocalDateTime.now().minusDays(1))
-                .userId(UUID.randomUUID().toString())
-                .roomId(UUID.randomUUID().toString())
+                .userId(UUID.randomUUID())
+                .roomId(UUID.randomUUID())
                 .status(BookingStatus.DELIVERED)
                 .review("Muy buena atención")
                 .rating(5)
@@ -132,7 +132,7 @@ public class BookingTestIT {
                     .andReturn();
 
             String idBookingCreated = JsonPath.parse( result.getResponse().getContentAsString()).read("$.id");
-            Booking bookingCreated = bookingRepository.findById(idBookingCreated).orElseThrow(()-> new AssertionFailure("Booking not created in DB"));
+            Booking bookingCreated = bookingRepository.findById(UUID.fromString(idBookingCreated)).orElseThrow(()-> new AssertionFailure("Booking not created in DB"));
 
             assertThat(bookingCreated.getCheckIn().toLocalDate()).isEqualTo(createBookingDTO.getCheckIn().toLocalDate());
             assertThat(bookingCreated.getCheckIn().getHour()).isEqualTo(createBookingDTO.getCheckIn().getHour());
@@ -142,8 +142,8 @@ public class BookingTestIT {
             assertThat(bookingCreated.getCheckOut().getHour()).isEqualTo(createBookingDTO.getCheckOut().getHour());
             assertThat(bookingCreated.getCheckOut().getMinute()).isEqualTo(createBookingDTO.getCheckOut().getMinute());
             assertThat(bookingCreated.getCheckOut().getSecond()).isEqualTo(createBookingDTO.getCheckOut().getSecond());
-            assertThat(bookingCreated.getRoomId()).isEqualTo(createBookingDTO.getRoomId());
-            assertThat(bookingCreated.getUserId()).isEqualTo(idUserLogged);
+            assertThat(bookingCreated.getRoomId().toString()).isEqualTo(createBookingDTO.getRoomId());
+            assertThat(bookingCreated.getUserId().toString()).isEqualTo(idUserLogged);
             assertThat(bookingCreated.getStatus()).isEqualTo(BookingStatus.BOOKED);
         }
 
@@ -152,7 +152,7 @@ public class BookingTestIT {
 
             createBookingDTO.setCheckIn(LocalDateTime.now().plusDays(1));
             createBookingDTO.setCheckOut(LocalDateTime.now().plusDays(2));
-            createBookingDTO.setRoomId(bookings.getFirst().getRoomId());
+            createBookingDTO.setRoomId(bookings.getFirst().getRoomId().toString());
 
             mockMvc
                     .perform(
@@ -233,7 +233,7 @@ public class BookingTestIT {
                     .perform(
                             MockMvcRequestBuilders
                                     .get("/api/bookings")
-                                    .queryParam("roomId", bookings.getFirst().getRoomId())
+                                    .queryParam("roomId", bookings.getFirst().getRoomId().toString())
 
                     )
                     .andExpect(MockMvcResultMatchers.jsonPath("$.size()").value(1));
@@ -245,7 +245,7 @@ public class BookingTestIT {
                     .perform(
                             MockMvcRequestBuilders
                                     .get("/api/bookings")
-                                    .queryParam("userId", bookings.getFirst().getUserId())
+                                    .queryParam("userId", bookings.getFirst().getUserId().toString())
 
                     )
                     .andExpect(MockMvcResultMatchers.jsonPath("$.size()").value(1));
@@ -346,7 +346,7 @@ public class BookingTestIT {
     class FindById {
         @Test
         void findById() throws Exception {
-            String idToFind = bookings.getLast().getId();
+            String idToFind = bookings.getLast().getId().toString();
 
             mockMvc
                     .perform(MockMvcRequestBuilders.get("/api/bookings/" + idToFind))
@@ -388,7 +388,7 @@ public class BookingTestIT {
 
         @Test
         void updateStatus() throws Exception {
-            String idToUpdate = bookings.getFirst().getId();
+            String idToUpdate = bookings.getFirst().getId().toString();
             updateStatusDTO.setStatus(BookingStatus.CANCELLED.name());
 
             RoomDTO roomDTO = RoomDTO.builder().id(UUID.randomUUID()).ownerId(UUID.randomUUID().toString()).build();
@@ -406,14 +406,14 @@ public class BookingTestIT {
                     .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(idToUpdate))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.status").value(updateStatusDTO.getStatus()));
 
-            Booking bookingUpdated = bookingRepository.findById(idToUpdate).orElseThrow(()-> new AssertionFailure("Booking should exist in DB"));
-            assertThat(bookingUpdated.getId()).isEqualTo(idToUpdate);
+            Booking bookingUpdated = bookingRepository.findById(UUID.fromString(idToUpdate)).orElseThrow(()-> new AssertionFailure("Booking should exist in DB"));
+            assertThat(bookingUpdated.getId().toString()).isEqualTo(idToUpdate);
             assertThat(bookingUpdated.getStatus().name()).isEqualTo(updateStatusDTO.getStatus());
         }
 
         @Test
         void errorWhenMissingFields() throws Exception {
-            String idToUpdate = bookings.getFirst().getId();
+            String idToUpdate = bookings.getFirst().getId().toString();
 
             mockMvc
                     .perform(
@@ -426,8 +426,8 @@ public class BookingTestIT {
                     .andExpect(MockMvcResultMatchers.status().is(HttpStatus.BAD_REQUEST.value()))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.errors.size()").value(1));
 
-            Booking bookingUpdated = bookingRepository.findById(idToUpdate).orElseThrow(()-> new AssertionFailure("Booking should exist in DB"));
-            assertThat(bookingUpdated.getId()).isEqualTo(idToUpdate);
+            Booking bookingUpdated = bookingRepository.findById(UUID.fromString(idToUpdate)).orElseThrow(()-> new AssertionFailure("Booking should exist in DB"));
+            assertThat(bookingUpdated.getId().toString()).isEqualTo(idToUpdate);
             assertThat(bookingUpdated.getStatus().name()).isEqualTo(bookings.getFirst().getStatus().name());
         }
 
@@ -479,7 +479,7 @@ public class BookingTestIT {
 
         @Test
         void review() throws Exception {
-            String idToReview = bookings.getFirst().getId();
+            String idToReview = bookings.getFirst().getId().toString();
             createReviewDTO.setRating(3);
             createReviewDTO.setReview("test review");
 
@@ -497,15 +497,15 @@ public class BookingTestIT {
                     .andExpect(MockMvcResultMatchers.jsonPath("$.rating").value(createReviewDTO.getRating()))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.review").value(createReviewDTO.getReview()));
 
-            Booking bookingUpdated = bookingRepository.findById(idToReview).orElseThrow(()-> new AssertionFailure("Booking should exist in DB"));
-            assertThat(bookingUpdated.getId()).isEqualTo(idToReview);
+            Booking bookingUpdated = bookingRepository.findById(UUID.fromString(idToReview)).orElseThrow(()-> new AssertionFailure("Booking should exist in DB"));
+            assertThat(bookingUpdated.getId().toString()).isEqualTo(idToReview);
             assertThat(bookingUpdated.getReview()).isEqualTo(createReviewDTO.getReview());
             assertThat(bookingUpdated.getRating()).isEqualTo(createReviewDTO.getRating());
         }
 
         @Test
         void errorWhenMissingFields() throws Exception {
-            String idToReview = bookings.getFirst().getId();
+            String idToReview = bookings.getFirst().getId().toString();
 
             mockMvc
                     .perform(
@@ -518,8 +518,8 @@ public class BookingTestIT {
                     .andExpect(MockMvcResultMatchers.status().is(HttpStatus.BAD_REQUEST.value()))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.errors.size()").value(1));
 
-            Booking bookingUpdated = bookingRepository.findById(idToReview).orElseThrow(()-> new AssertionFailure("Booking should exist in DB"));
-            assertThat(bookingUpdated.getId()).isEqualTo(idToReview);
+            Booking bookingUpdated = bookingRepository.findById(UUID.fromString(idToReview)).orElseThrow(()-> new AssertionFailure("Booking should exist in DB"));
+            assertThat(bookingUpdated.getId().toString()).isEqualTo(idToReview);
             assertThat(bookingUpdated.getReview()).isNull();
             assertThat(bookingUpdated.getRating()).isNull();
         }

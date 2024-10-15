@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "bookings")
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @CreationTimestamp()
     @Column(name = "created_at")
@@ -32,10 +33,10 @@ public class Booking {
     private LocalDateTime checkOut;
 
     @Column(name = "user_id")
-    private String userId;
+    private UUID userId;
 
     @Column(name = "room_id")
-    private String roomId;
+    private UUID roomId;
 
     @Enumerated(EnumType.STRING)
     private BookingStatus status;

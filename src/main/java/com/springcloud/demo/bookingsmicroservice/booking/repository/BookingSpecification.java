@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class BookingSpecification {
@@ -17,10 +18,10 @@ public class BookingSpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             if(filters.getUserId() != null){
-                predicates.add(builder.equal(root.get("userId"), filters.getUserId()));
+                predicates.add(builder.equal(root.get("userId"), UUID.fromString(filters.getUserId())));
             }
             if(filters.getRoomId() != null){
-                predicates.add(builder.equal(root.get("roomId"), filters.getRoomId()));
+                predicates.add(builder.equal(root.get("roomId"), UUID.fromString(filters.getRoomId())));
             }
             if(filters.getStatus() != null){
                 predicates.add(builder.equal(root.get("status"), filters.getStatus()));

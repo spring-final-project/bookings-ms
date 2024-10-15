@@ -26,7 +26,7 @@ class BookingMapperTest {
 
         assertThat(booking.getCheckIn()).isEqualTo(createBookingDTO.getCheckIn());
         assertThat(booking.getCheckOut()).isEqualTo(createBookingDTO.getCheckOut());
-        assertThat(booking.getRoomId()).isEqualTo(createBookingDTO.getRoomId());
+        assertThat(booking.getRoomId().toString()).isEqualTo(createBookingDTO.getRoomId());
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.BOOKED);
     }
 
@@ -34,12 +34,12 @@ class BookingMapperTest {
     void bookingToResponseBookingDto(){
         Booking booking = Booking
                 .builder()
-                .id(UUID.randomUUID().toString())
+                .id(UUID.randomUUID())
                 .createdAt(LocalDateTime.now())
                 .checkIn(LocalDateTime.now())
                 .checkOut(LocalDateTime.now().plusDays(2))
-                .userId(UUID.randomUUID().toString())
-                .roomId(UUID.randomUUID().toString())
+                .userId(UUID.randomUUID())
+                .roomId(UUID.randomUUID())
                 .status(BookingStatus.BOOKED)
                 .rating(5)
                 .review("Review")

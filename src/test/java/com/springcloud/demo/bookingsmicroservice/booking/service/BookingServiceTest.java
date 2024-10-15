@@ -78,26 +78,26 @@ class BookingServiceTest {
         void createBooking() {
 
             Booking bookingSaved = Booking.builder()
-                    .id(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID())
                     .checkIn(createBookingDTO.getCheckIn())
                     .checkOut(createBookingDTO.getCheckOut())
-                    .roomId(createBookingDTO.getRoomId())
-                    .userId(UUID.randomUUID().toString())
+                    .roomId(UUID.fromString(createBookingDTO.getRoomId()))
+                    .userId(UUID.randomUUID())
                     .createdAt(LocalDateTime.now())
                     .status(BookingStatus.BOOKED)
                     .build();
 
-            given(bookingRepository.findBookingsByRange(any(LocalDateTime.class), any(LocalDateTime.class), anyString(), anyString())).willReturn(Optional.empty());
+            given(bookingRepository.findBookingsByRange(any(LocalDateTime.class), any(LocalDateTime.class), any(UUID.class), any(UUID.class))).willReturn(Optional.empty());
             given(bookingRepository.save(any(Booking.class))).willReturn(bookingSaved);
             willDoNothing().given(messagingProducer).sendMessage(anyString(), anyString());
 
             ResponseBookingDTO response = bookingService.create(createBookingDTO, UUID.randomUUID().toString());
 
-            verify(bookingRepository).findBookingsByRange(eq(createBookingDTO.getCheckIn()), eq(createBookingDTO.getCheckOut()), anyString(), eq(createBookingDTO.getRoomId()));
+            verify(bookingRepository).findBookingsByRange(eq(createBookingDTO.getCheckIn()), eq(createBookingDTO.getCheckOut()), any(UUID.class), eq(UUID.fromString(createBookingDTO.getRoomId())));
             verify(bookingRepository).save(argThat(dto ->
                     Objects.equals(dto.getCheckIn(), createBookingDTO.getCheckIn()) &&
                             Objects.equals(dto.getCheckOut(), createBookingDTO.getCheckOut()) &&
-                            Objects.equals(dto.getRoomId(), createBookingDTO.getRoomId()) &&
+                            Objects.equals(dto.getRoomId(), UUID.fromString(createBookingDTO.getRoomId())) &&
                             dto.getUserId() != null
             ));
             assertThat(response).isNotNull();
@@ -107,16 +107,16 @@ class BookingServiceTest {
         void errorWhenAlreadyExistOtherBookingInSameRange() {
             Booking bookingAtSameTime = Booking.builder()
                     .status(BookingStatus.BOOKED)
-                    .userId(UUID.randomUUID().toString())
+                    .userId(UUID.randomUUID())
                     .build();
 
-            given(bookingRepository.findBookingsByRange(any(LocalDateTime.class), any(LocalDateTime.class), anyString(), anyString())).willReturn(Optional.of(bookingAtSameTime));
+            given(bookingRepository.findBookingsByRange(any(LocalDateTime.class), any(LocalDateTime.class), any(UUID.class), any(UUID.class))).willReturn(Optional.of(bookingAtSameTime));
 
             ForbiddenException e = Assertions.assertThrows(ForbiddenException.class, () -> {
-                bookingService.create(createBookingDTO, bookingAtSameTime.getUserId());
+                bookingService.create(createBookingDTO, bookingAtSameTime.getUserId().toString());
             });
 
-            verify(bookingRepository).findBookingsByRange(eq(createBookingDTO.getCheckIn()), eq(createBookingDTO.getCheckOut()), anyString(), eq(createBookingDTO.getRoomId()));
+            verify(bookingRepository).findBookingsByRange(eq(createBookingDTO.getCheckIn()), eq(createBookingDTO.getCheckOut()), any(UUID.class), eq(UUID.fromString(createBookingDTO.getRoomId())));
             verify(bookingRepository, never()).save(any(Booking.class));
         }
     }
@@ -130,8 +130,8 @@ class BookingServiceTest {
         @BeforeEach
         void setup() {
             filters = new FilterBookingDTO();
-            Booking booking1 = Booking.builder().id(UUID.randomUUID().toString()).checkIn(LocalDateTime.now()).checkOut(LocalDateTime.now()).roomId(UUID.randomUUID().toString()).userId(UUID.randomUUID().toString()).createdAt(LocalDateTime.now()).build();
-            Booking booking2 = Booking.builder().id(UUID.randomUUID().toString()).checkIn(LocalDateTime.now()).checkOut(LocalDateTime.now()).roomId(UUID.randomUUID().toString()).userId(UUID.randomUUID().toString()).createdAt(LocalDateTime.now()).build();
+            Booking booking1 = Booking.builder().id(UUID.randomUUID()).checkIn(LocalDateTime.now()).checkOut(LocalDateTime.now()).roomId(UUID.randomUUID()).userId(UUID.randomUUID()).createdAt(LocalDateTime.now()).build();
+            Booking booking2 = Booking.builder().id(UUID.randomUUID()).checkIn(LocalDateTime.now()).checkOut(LocalDateTime.now()).roomId(UUID.randomUUID()).userId(UUID.randomUUID()).createdAt(LocalDateTime.now()).build();
             bookingsFound = List.of(booking1, booking2);
         }
 
@@ -160,8 +160,6 @@ class BookingServiceTest {
             filters.setRoomId(UUID.randomUUID().toString());
             filters.setUserId(UUID.randomUUID().toString());
 
-//            filters.setCheckIn(LocalDateTime.now());
-//            filters.setCheckOut(LocalDateTime.now().plusDays(2));
             given(bookingSpecification.withFilters(any(FilterBookingDTO.class))).willReturn((root, query, builder) -> builder.and());
             given(bookingRepository.findAll((Specification<Booking>) any(), any(Pageable.class))).willReturn(new PageImpl<>(bookingsFound));
 
@@ -190,20 +188,20 @@ class BookingServiceTest {
         void findById() {
             String idToFind = UUID.randomUUID().toString();
             Booking bookingFound = Booking.builder()
-                    .id(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID())
                     .checkIn(LocalDateTime.now())
                     .checkOut(LocalDateTime.now().plusDays(2))
-                    .roomId(UUID.randomUUID().toString())
-                    .userId(UUID.randomUUID().toString())
+                    .roomId(UUID.randomUUID())
+                    .userId(UUID.randomUUID())
                     .createdAt(LocalDateTime.now())
                     .status(BookingStatus.BOOKED)
                     .build();
 
-            given(bookingRepository.findById(anyString())).willReturn(Optional.of(bookingFound));
+            given(bookingRepository.findById(any(UUID.class))).willReturn(Optional.of(bookingFound));
 
             ResponseBookingDTO response = bookingService.findById(idToFind);
 
-            verify(bookingRepository).findById(idToFind);
+            verify(bookingRepository).findById(UUID.fromString(idToFind));
             assertThat(response).isNotNull();
         }
 
@@ -211,13 +209,13 @@ class BookingServiceTest {
         void errorWhenNotFoundBookingById() {
             String idToFind = UUID.randomUUID().toString();
 
-            given(bookingRepository.findById(anyString())).willReturn(Optional.empty());
+            given(bookingRepository.findById(any(UUID.class))).willReturn(Optional.empty());
 
             NotFoundException e = Assertions.assertThrows(NotFoundException.class, () -> {
                 bookingService.findById(idToFind);
             });
 
-            verify(bookingRepository).findById(idToFind);
+            verify(bookingRepository).findById(UUID.fromString(idToFind));
             assertThat(e.getMessage()).contains("Not found booking with id");
         }
     }
@@ -230,32 +228,32 @@ class BookingServiceTest {
             UpdateStatusDTO updateStatusDTO = new UpdateStatusDTO(BookingStatus.IN_USE.toString());
             RoomDTO roomDTO = RoomDTO.builder().id(UUID.randomUUID()).ownerId(UUID.randomUUID().toString()).build();
             Booking bookingFound = Booking.builder()
-                    .id(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID())
                     .checkIn(LocalDateTime.now())
                     .checkOut(LocalDateTime.now().plusDays(2))
-                    .roomId(UUID.randomUUID().toString())
-                    .userId(UUID.randomUUID().toString())
+                    .roomId(UUID.randomUUID())
+                    .userId(UUID.randomUUID())
                     .createdAt(LocalDateTime.now())
                     .status(BookingStatus.BOOKED)
                     .build();
             Booking updatedBooking = Booking.builder()
-                    .id(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID())
                     .checkIn(LocalDateTime.now())
                     .checkOut(LocalDateTime.now().plusDays(2))
-                    .roomId(UUID.randomUUID().toString())
-                    .userId(UUID.randomUUID().toString())
+                    .roomId(UUID.randomUUID())
+                    .userId(UUID.randomUUID())
                     .createdAt(LocalDateTime.now())
                     .status(BookingStatus.DELIVERED)
                     .build();
 
 
-            given(bookingRepository.findById(anyString())).willReturn(Optional.of(bookingFound));
+            given(bookingRepository.findById(any(UUID.class))).willReturn(Optional.of(bookingFound));
             given(roomClient.findById(anyString())).willReturn(roomDTO);
             given(bookingRepository.save(any(Booking.class))).willReturn(updatedBooking);
 
             ResponseBookingDTO response = bookingService.updateStatus(idToFind, updateStatusDTO, roomDTO.getOwnerId());
 
-            verify(bookingRepository).findById(idToFind);
+            verify(bookingRepository).findById(UUID.fromString(idToFind));
             verify(bookingRepository).save(bookingFound);
             verify(bookingRepository).save(argThat(args -> args.getStatus().name().equals(updateStatusDTO.getStatus())));
             assertThat(response).isNotNull();
@@ -266,13 +264,13 @@ class BookingServiceTest {
             String idToFind = UUID.randomUUID().toString();
             UpdateStatusDTO updateStatusDTO = new UpdateStatusDTO(BookingStatus.IN_USE.toString());
 
-            given(bookingRepository.findById(anyString())).willReturn(Optional.empty());
+            given(bookingRepository.findById(any(UUID.class))).willReturn(Optional.empty());
 
             NotFoundException e = Assertions.assertThrows(NotFoundException.class, () -> {
                 bookingService.updateStatus(idToFind, updateStatusDTO, UUID.randomUUID().toString());
             });
 
-            verify(bookingRepository).findById(idToFind);
+            verify(bookingRepository).findById(UUID.fromString(idToFind));
             verify(bookingRepository, never()).save(any());
             assertThat(e.getMessage()).contains("Not found booking with id");
         }
@@ -286,7 +284,7 @@ class BookingServiceTest {
                 bookingService.updateStatus(idToFind, updateStatusDTO, UUID.randomUUID().toString());
             });
 
-            verify(bookingRepository, never()).findById(idToFind);
+            verify(bookingRepository, never()).findById(UUID.fromString(idToFind));
             verify(bookingRepository, never()).save(any());
             assertThat(e.getMessage()).contains("is not valid status");
         }
@@ -299,11 +297,11 @@ class BookingServiceTest {
             String idToUpdate = UUID.randomUUID().toString();
             CreateReviewDTO createReviewDTO = new CreateReviewDTO(5, "review");
             Booking bookingFound = Booking.builder()
-                    .id(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID())
                     .checkIn(LocalDateTime.now())
                     .checkOut(LocalDateTime.now().plusDays(2))
-                    .roomId(UUID.randomUUID().toString())
-                    .userId(UUID.randomUUID().toString())
+                    .roomId(UUID.randomUUID())
+                    .userId(UUID.randomUUID())
                     .createdAt(LocalDateTime.now())
                     .status(BookingStatus.DELIVERED)
                     .build();
@@ -319,12 +317,12 @@ class BookingServiceTest {
                     .rating(createReviewDTO.getRating())
                     .build();
 
-            given(bookingRepository.findById(anyString())).willReturn(Optional.of(bookingFound));
+            given(bookingRepository.findById(any(UUID.class))).willReturn(Optional.of(bookingFound));
             given(bookingRepository.save(any(Booking.class))).willReturn(updatedBooking);
 
-            ResponseBookingDTO response = bookingService.review(idToUpdate, createReviewDTO, bookingFound.getUserId());
+            ResponseBookingDTO response = bookingService.review(idToUpdate, createReviewDTO, bookingFound.getUserId().toString());
 
-            verify(bookingRepository).findById(idToUpdate);
+            verify(bookingRepository).findById(UUID.fromString(idToUpdate));
             verify(bookingRepository).save(bookingFound);
             verify(bookingRepository).save(argThat(args ->
                     Objects.equals(args.getRating(), createReviewDTO.getRating()) &&
@@ -338,13 +336,13 @@ class BookingServiceTest {
             String idToUpdate = UUID.randomUUID().toString();
             CreateReviewDTO createReviewDTO = new CreateReviewDTO(5, "review");
 
-            given(bookingRepository.findById(anyString())).willReturn(Optional.empty());
+            given(bookingRepository.findById(any(UUID.class))).willReturn(Optional.empty());
 
             NotFoundException e = Assertions.assertThrows(NotFoundException.class, ()-> {
                 bookingService.review(idToUpdate, createReviewDTO, UUID.randomUUID().toString());
             });
 
-            verify(bookingRepository).findById(idToUpdate);
+            verify(bookingRepository).findById(UUID.fromString(idToUpdate));
             verify(bookingRepository, never()).save(any());
             assertThat(e.getMessage()).contains("Not found booking with id");
         }

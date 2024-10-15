@@ -4,7 +4,8 @@ import com.springcloud.demo.bookingsmicroservice.booking.dto.CreateBookingDTO;
 import com.springcloud.demo.bookingsmicroservice.booking.dto.ResponseBookingDTO;
 import com.springcloud.demo.bookingsmicroservice.booking.model.Booking;
 import com.springcloud.demo.bookingsmicroservice.booking.model.BookingStatus;
-import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 public class BookingMapper {
 
@@ -13,7 +14,7 @@ public class BookingMapper {
                 .builder()
                 .checkIn(createBookingDTO.getCheckIn())
                 .checkOut(createBookingDTO.getCheckOut())
-                .roomId(createBookingDTO.getRoomId())
+                .roomId(UUID.fromString(createBookingDTO.getRoomId()))
                 .status(BookingStatus.BOOKED)
                 .build();
     }

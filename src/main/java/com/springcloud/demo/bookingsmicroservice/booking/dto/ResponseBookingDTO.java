@@ -5,18 +5,20 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResponseBookingDTO {
-    private String id;
+    private UUID id;
     private String createdAt;
     private String receiptUrl;
     private String checkIn;
     private String checkOut;
-    private String userId;
-    private String roomId;
+    private UUID userId;
+    private UUID roomId;
     private BookingStatus status;
     private Integer rating;
     private String review;

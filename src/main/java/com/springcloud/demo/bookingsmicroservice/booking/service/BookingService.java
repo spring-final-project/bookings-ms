@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -50,21 +51,21 @@ public class BookingService {
         Optional<Booking> bookingInSameRange = bookingRepository.findBookingsByRange(
                 createBookingDTO.getCheckIn(),
                 createBookingDTO.getCheckOut(),
-                idUserLogged,
-                createBookingDTO.getRoomId()
+                UUID.fromString(idUserLogged),
+                UUID.fromString(createBookingDTO.getRoomId())
         );
 
         if(bookingInSameRange.isPresent()){
-            if(bookingInSameRange.get().getUserId().equals(idUserLogged)){
+            if(bookingInSameRange.get().getUserId().toString().equals(idUserLogged)){
                 throw new ForbiddenException("User already has any booking at same time");
             }
-            if(bookingInSameRange.get().getRoomId().equals(createBookingDTO.getRoomId())){
+            if(bookingInSameRange.get().getRoomId().toString().equals(createBookingDTO.getRoomId())){
                 throw new ForbiddenException("Room already booked at same time");
             }
         }
 
         Booking booking = BookingMapper.createBookingDtoToBooking(createBookingDTO);
-        booking.setUserId(idUserLogged);
+        booking.setUserId(UUID.fromString(idUserLogged));
 
         booking = bookingRepository.save(booking);
 
@@ -88,7 +89,7 @@ public class BookingService {
 
     public ResponseBookingDTO findById(String id) {
         Booking booking = bookingRepository
-                .findById(id)
+                .findById(UUID.fromString(id))
                 .orElseThrow(()-> new NotFoundException("Not found booking with id:" + id));
 
         return BookingMapper.bookingToResponseBookingDto(booking);
@@ -103,10 +104,10 @@ public class BookingService {
         }
 
         Booking booking = bookingRepository
-                .findById(id)
+                .findById(UUID.fromString(id))
                 .orElseThrow(()-> new NotFoundException("Not found booking with id:" + id));
 
-        RoomDTO roomOfBooking = roomClient.findById(booking.getRoomId());
+        RoomDTO roomOfBooking = roomClient.findById(booking.getRoomId().toString());
 
         if(!roomOfBooking.getOwnerId().equals(idUserLogged)){
             throw new ForbiddenException("Not have permission to update booking of room that belong to another user");
@@ -121,10 +122,10 @@ public class BookingService {
 
     public ResponseBookingDTO review(String id, CreateReviewDTO createReviewDTO, String idUserLogged) {
         Booking booking = bookingRepository
-                .findById(id)
+                .findById(UUID.fromString(id))
                 .orElseThrow(()-> new NotFoundException("Not found booking with id:" + id));
 
-        if(!booking.getUserId().equals(idUserLogged)){
+        if(!booking.getUserId().toString().equals(idUserLogged)){
             throw new ForbiddenException("Not have permission to review booking that belong to another user");
         }
 

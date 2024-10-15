@@ -51,7 +51,7 @@ class BookingSpecificationTest {
 
         bookingSpecification.withFilters(filters).toPredicate(root, query, builder);
 
-        verify(builder).equal(root.get("userId"), filters.getUserId());
+        verify(builder).equal(root.get("userId"), UUID.fromString(filters.getUserId()));
     }
 
     @Test
@@ -60,7 +60,7 @@ class BookingSpecificationTest {
 
         bookingSpecification.withFilters(filters).toPredicate(root, query, builder);
 
-        verify(builder).equal(root.get("roomId"), filters.getRoomId());
+        verify(builder).equal(root.get("roomId"), UUID.fromString(filters.getRoomId()));
     }
 
     @Test
