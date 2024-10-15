@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,5 +18,5 @@ public interface BookingRepository extends JpaRepository<Booking, UUID>, JpaSpec
             "OR (?2 BETWEEN b.checkIn AND b.checkOut)) " +
             "AND b.status = BOOKED " +
             "AND (b.userId = ?3 OR b.roomId = ?4)")
-    Optional<Booking> findBookingsByRange(LocalDateTime checkIn, LocalDateTime checkOut, UUID userId, UUID roomId);
+    Optional<Booking> findBookingsByRange(OffsetDateTime checkIn, OffsetDateTime checkOut, UUID userId, UUID roomId);
 }

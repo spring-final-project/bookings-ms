@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.UUID;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Data
 @Builder
@@ -23,9 +24,9 @@ public class FilterBookingDTO {
     @UUID
     private String roomId;
 
-    private LocalDateTime checkIn;
+    private OffsetDateTime checkIn;
 
-    private LocalDateTime checkOut;
+    private OffsetDateTime checkOut;
 
     private BookingStatus status;
 

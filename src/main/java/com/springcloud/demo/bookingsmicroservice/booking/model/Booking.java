@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
@@ -21,16 +22,16 @@ public class Booking {
 
     @CreationTimestamp()
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Column(name = "receipt_url")
     private String receiptUrl;
 
     @Column(name = "check_in")
-    private LocalDateTime checkIn;
+    private OffsetDateTime checkIn;
 
     @Column(name = "check_out")
-    private LocalDateTime checkOut;
+    private OffsetDateTime checkOut;
 
     @Column(name = "user_id")
     private UUID userId;

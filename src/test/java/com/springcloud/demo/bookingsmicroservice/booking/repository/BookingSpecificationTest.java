@@ -15,7 +15,7 @@ import org.mockito.InjectMocks;
 import static org.mockito.BDDMockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
@@ -92,7 +92,7 @@ class BookingSpecificationTest {
 
     @Test
     void withCheckInFilter(){
-        filters.setCheckIn(LocalDateTime.now());
+        filters.setCheckIn(OffsetDateTime.now());
 
         bookingSpecification.withFilters(filters).toPredicate(root, query, builder);
 
@@ -101,7 +101,7 @@ class BookingSpecificationTest {
 
     @Test
     void withCheckOutFilter(){
-        filters.setCheckOut(LocalDateTime.now());
+        filters.setCheckOut(OffsetDateTime.now());
 
         bookingSpecification.withFilters(filters).toPredicate(root, query, builder);
 

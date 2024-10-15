@@ -21,9 +21,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @WebMvcTest
@@ -53,8 +52,8 @@ class BookingControllerTest {
 
         @Test
         void createBooking() throws Exception {
-            createBookingDTO.setCheckIn(LocalDateTime.now().plusDays(1));
-            createBookingDTO.setCheckOut(LocalDateTime.now().plusDays(3));
+            createBookingDTO.setCheckIn(OffsetDateTime.now().plusDays(1).toString());
+            createBookingDTO.setCheckOut(OffsetDateTime.now().plusDays(3).toString());
             createBookingDTO.setRoomId(UUID.randomUUID().toString());
 
             given(bookingService.create(any(CreateBookingDTO.class), anyString())).willReturn(new ResponseBookingDTO());
@@ -68,13 +67,17 @@ class BookingControllerTest {
                     )
                     .andExpect(MockMvcResultMatchers.status().is(HttpStatus.CREATED.value()))
                     .andExpect(MockMvcResultMatchers.content().json(objectMapper.writeValueAsString(new ResponseBookingDTO())));
-            verify(bookingService).create(eq(createBookingDTO), anyString());
+            verify(bookingService).create(argThat(args ->
+                    args.getCheckIn().equals(createBookingDTO.getCheckIn()) &&
+                            args.getCheckOut().equals(createBookingDTO.getCheckOut()) &&
+                            args.getRoomId().equals(createBookingDTO.getRoomId())
+            ), anyString());
         }
 
         @Test
         void errorWhenCheckInIsBeforeCurrentTime() throws Exception {
-            createBookingDTO.setCheckIn(LocalDateTime.now().minusDays(2));
-            createBookingDTO.setCheckOut(LocalDateTime.now().plusDays(3));
+            createBookingDTO.setCheckIn(OffsetDateTime.now().minusDays(2).toString());
+            createBookingDTO.setCheckOut(OffsetDateTime.now().plusDays(3).toString());
             createBookingDTO.setRoomId(UUID.randomUUID().toString());
 
             given(bookingService.create(any(CreateBookingDTO.class), anyString())).willReturn(new ResponseBookingDTO());

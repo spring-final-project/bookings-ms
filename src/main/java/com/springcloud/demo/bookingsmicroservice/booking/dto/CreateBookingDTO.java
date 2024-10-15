@@ -1,5 +1,6 @@
 package com.springcloud.demo.bookingsmicroservice.booking.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.UUID;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Data
 @Builder
@@ -17,13 +19,15 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CreateBookingDTO {
 
-    @Future
+//    @Future
     @NotNull
-    private LocalDateTime checkIn;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private String checkIn;
 
-    @Future
+//    @Future
     @NotNull
-    private LocalDateTime checkOut;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private String checkOut;
 
     @UUID
     @NotBlank

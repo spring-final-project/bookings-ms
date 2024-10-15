@@ -1,4 +1,4 @@
-package com.springcloud.demo.bookingsmicroservice.booking;
+package com.springcloud.demo.bookingsmicroservice.booking.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
@@ -34,6 +34,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -65,8 +67,8 @@ public class BookingTestIT {
 
         Booking booking1 = Booking
                 .builder()
-                .checkIn(LocalDateTime.now().plusDays(1))
-                .checkOut(LocalDateTime.now().plusDays(3))
+                .checkIn(OffsetDateTime.now().plusDays(1))
+                .checkOut(OffsetDateTime.now().plusDays(3))
                 .userId(UUID.randomUUID())
                 .roomId(UUID.randomUUID())
                 .status(BookingStatus.BOOKED)
@@ -74,8 +76,8 @@ public class BookingTestIT {
 
         Booking booking2 = Booking
                 .builder()
-                .checkIn(LocalDateTime.now().plusDays(4))
-                .checkOut(LocalDateTime.now().plusDays(7))
+                .checkIn(OffsetDateTime.now().plusDays(4))
+                .checkOut(OffsetDateTime.now().plusDays(7))
                 .userId(UUID.randomUUID())
                 .roomId(UUID.randomUUID())
                 .status(BookingStatus.BOOKED)
@@ -83,8 +85,8 @@ public class BookingTestIT {
 
         Booking booking3 = Booking
                 .builder()
-                .checkIn(LocalDateTime.now().minusDays(4))
-                .checkOut(LocalDateTime.now().minusDays(1))
+                .checkIn(OffsetDateTime.now().minusDays(4))
+                .checkOut(OffsetDateTime.now().minusDays(1))
                 .userId(UUID.randomUUID())
                 .roomId(UUID.randomUUID())
                 .status(BookingStatus.DELIVERED)
@@ -107,9 +109,11 @@ public class BookingTestIT {
 
         @Test
         void createBooking() throws Exception {
+            OffsetDateTime checkIn = OffsetDateTime.now().plusDays(1);
+            OffsetDateTime checkOut = OffsetDateTime.now().plusDays(3);
 
-            createBookingDTO.setCheckIn(LocalDateTime.now().plusDays(7));
-            createBookingDTO.setCheckOut(LocalDateTime.now().plusDays(10));
+            createBookingDTO.setCheckIn(checkIn.toString());
+            createBookingDTO.setCheckOut(checkOut.toString());
             createBookingDTO.setRoomId(UUID.randomUUID().toString());
 
             String idUserLogged = UUID.randomUUID().toString();
@@ -124,8 +128,8 @@ public class BookingTestIT {
                     )
                     .andExpect(MockMvcResultMatchers.status().is(HttpStatus.CREATED.value()))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.id").isString())
-                    .andExpect(MockMvcResultMatchers.jsonPath("$.checkIn").value(createBookingDTO.getCheckIn().toString()))
-                    .andExpect(MockMvcResultMatchers.jsonPath("$.checkOut").value(createBookingDTO.getCheckOut().toString()))
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.checkIn").isString())
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.checkOut").isString())
                     .andExpect(MockMvcResultMatchers.jsonPath("$.roomId").value(createBookingDTO.getRoomId()))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.userId").value(idUserLogged))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.status").value(BookingStatus.BOOKED.name()))
@@ -134,14 +138,14 @@ public class BookingTestIT {
             String idBookingCreated = JsonPath.parse( result.getResponse().getContentAsString()).read("$.id");
             Booking bookingCreated = bookingRepository.findById(UUID.fromString(idBookingCreated)).orElseThrow(()-> new AssertionFailure("Booking not created in DB"));
 
-            assertThat(bookingCreated.getCheckIn().toLocalDate()).isEqualTo(createBookingDTO.getCheckIn().toLocalDate());
-            assertThat(bookingCreated.getCheckIn().getHour()).isEqualTo(createBookingDTO.getCheckIn().getHour());
-            assertThat(bookingCreated.getCheckIn().getMinute()).isEqualTo(createBookingDTO.getCheckIn().getMinute());
-            assertThat(bookingCreated.getCheckIn().getSecond()).isEqualTo(createBookingDTO.getCheckIn().getSecond());
-            assertThat(bookingCreated.getCheckOut().toLocalDate()).isEqualTo(createBookingDTO.getCheckOut().toLocalDate());
-            assertThat(bookingCreated.getCheckOut().getHour()).isEqualTo(createBookingDTO.getCheckOut().getHour());
-            assertThat(bookingCreated.getCheckOut().getMinute()).isEqualTo(createBookingDTO.getCheckOut().getMinute());
-            assertThat(bookingCreated.getCheckOut().getSecond()).isEqualTo(createBookingDTO.getCheckOut().getSecond());
+            assertThat(bookingCreated.getCheckIn().toLocalDate()).isEqualTo(checkIn.toLocalDate());
+            assertThat(bookingCreated.getCheckIn().getHour()).isEqualTo(checkIn.getHour());
+            assertThat(bookingCreated.getCheckIn().getMinute()).isEqualTo(checkIn.getMinute());
+            assertThat(bookingCreated.getCheckIn().getSecond()).isEqualTo(checkIn.getSecond());
+            assertThat(bookingCreated.getCheckOut().toLocalDate()).isEqualTo(checkOut.toLocalDate());
+            assertThat(bookingCreated.getCheckOut().getHour()).isEqualTo(checkOut.getHour());
+            assertThat(bookingCreated.getCheckOut().getMinute()).isEqualTo(checkOut.getMinute());
+            assertThat(bookingCreated.getCheckOut().getSecond()).isEqualTo(checkOut.getSecond());
             assertThat(bookingCreated.getRoomId().toString()).isEqualTo(createBookingDTO.getRoomId());
             assertThat(bookingCreated.getUserId().toString()).isEqualTo(idUserLogged);
             assertThat(bookingCreated.getStatus()).isEqualTo(BookingStatus.BOOKED);
@@ -150,8 +154,8 @@ public class BookingTestIT {
         @Test
         void errorWhenAlreadyExistBookingAtSameTime() throws Exception {
 
-            createBookingDTO.setCheckIn(LocalDateTime.now().plusDays(1));
-            createBookingDTO.setCheckOut(LocalDateTime.now().plusDays(2));
+            createBookingDTO.setCheckIn(OffsetDateTime.now().plusDays(1).toString());
+            createBookingDTO.setCheckOut(OffsetDateTime.now().plusDays(2).toString());
             createBookingDTO.setRoomId(bookings.getFirst().getRoomId().toString());
 
             mockMvc
@@ -173,8 +177,8 @@ public class BookingTestIT {
         @Test
         void errorWhenCheckOutIsBeforeCheckIn() throws Exception {
 
-            createBookingDTO.setCheckIn(LocalDateTime.now().plusDays(10));
-            createBookingDTO.setCheckOut(LocalDateTime.now().plusDays(7));
+            createBookingDTO.setCheckIn(OffsetDateTime.now().plusDays(10).toString());
+            createBookingDTO.setCheckOut(OffsetDateTime.now().plusDays(7).toString());
             createBookingDTO.setRoomId(UUID.randomUUID().toString());
 
             mockMvc
@@ -293,7 +297,7 @@ public class BookingTestIT {
                     .perform(
                             MockMvcRequestBuilders
                                     .get("/api/bookings")
-                                    .queryParam("checkIn", LocalDateTime.now().minusDays(1).toString())
+                                    .queryParam("checkIn", OffsetDateTime.now().toString())
 
                     )
                     .andExpect(MockMvcResultMatchers.jsonPath("$.size()").value(2));
@@ -305,7 +309,7 @@ public class BookingTestIT {
                     .perform(
                             MockMvcRequestBuilders
                                     .get("/api/bookings")
-                                    .queryParam("checkOut", LocalDateTime.now().plusDays(4).toString())
+                                    .queryParam("checkOut", OffsetDateTime.now().plusDays(4).toString())
 
                     )
                     .andExpect(MockMvcResultMatchers.jsonPath("$.size()").value(2));

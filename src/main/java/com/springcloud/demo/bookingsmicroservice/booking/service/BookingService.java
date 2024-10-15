@@ -19,6 +19,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -44,28 +47,44 @@ public class BookingService {
         //        Check exist room
         roomClient.findById(createBookingDTO.getRoomId());
 
-        if(createBookingDTO.getCheckIn().isAfter(createBookingDTO.getCheckOut())){
+        OffsetDateTime checkIn;
+        OffsetDateTime checkOut;
+
+        try {
+            checkIn = OffsetDateTime.parse(createBookingDTO.getCheckIn());
+        } catch (DateTimeParseException e) {
+            throw new BadRequestException("checkIn is not a valid date");
+        }
+        try {
+            checkOut = OffsetDateTime.parse(createBookingDTO.getCheckOut());
+        } catch (DateTimeParseException e) {
+            throw new BadRequestException("checkOut is not a valid date");
+        }
+
+        if (checkIn.isAfter(checkOut)) {
             throw new BadRequestException("checkIn cannot be after checkOut");
         }
 
         Optional<Booking> bookingInSameRange = bookingRepository.findBookingsByRange(
-                createBookingDTO.getCheckIn(),
-                createBookingDTO.getCheckOut(),
+                checkIn,
+                checkOut,
                 UUID.fromString(idUserLogged),
                 UUID.fromString(createBookingDTO.getRoomId())
         );
 
-        if(bookingInSameRange.isPresent()){
-            if(bookingInSameRange.get().getUserId().toString().equals(idUserLogged)){
+        if (bookingInSameRange.isPresent()) {
+            if (bookingInSameRange.get().getUserId().toString().equals(idUserLogged)) {
                 throw new ForbiddenException("User already has any booking at same time");
             }
-            if(bookingInSameRange.get().getRoomId().toString().equals(createBookingDTO.getRoomId())){
+            if (bookingInSameRange.get().getRoomId().toString().equals(createBookingDTO.getRoomId())) {
                 throw new ForbiddenException("Room already booked at same time");
             }
         }
 
         Booking booking = BookingMapper.createBookingDtoToBooking(createBookingDTO);
         booking.setUserId(UUID.fromString(idUserLogged));
+        booking.setCheckIn(checkIn);
+        booking.setCheckOut(checkOut);
 
         booking = bookingRepository.save(booking);
 
@@ -90,7 +109,7 @@ public class BookingService {
     public ResponseBookingDTO findById(String id) {
         Booking booking = bookingRepository
                 .findById(UUID.fromString(id))
-                .orElseThrow(()-> new NotFoundException("Not found booking with id:" + id));
+                .orElseThrow(() -> new NotFoundException("Not found booking with id:" + id));
 
         return BookingMapper.bookingToResponseBookingDto(booking);
     }
@@ -105,11 +124,11 @@ public class BookingService {
 
         Booking booking = bookingRepository
                 .findById(UUID.fromString(id))
-                .orElseThrow(()-> new NotFoundException("Not found booking with id:" + id));
+                .orElseThrow(() -> new NotFoundException("Not found booking with id:" + id));
 
         RoomDTO roomOfBooking = roomClient.findById(booking.getRoomId().toString());
 
-        if(!roomOfBooking.getOwnerId().equals(idUserLogged)){
+        if (!roomOfBooking.getOwnerId().equals(idUserLogged)) {
             throw new ForbiddenException("Not have permission to update booking of room that belong to another user");
         }
 
@@ -123,13 +142,13 @@ public class BookingService {
     public ResponseBookingDTO review(String id, CreateReviewDTO createReviewDTO, String idUserLogged) {
         Booking booking = bookingRepository
                 .findById(UUID.fromString(id))
-                .orElseThrow(()-> new NotFoundException("Not found booking with id:" + id));
+                .orElseThrow(() -> new NotFoundException("Not found booking with id:" + id));
 
-        if(!booking.getUserId().toString().equals(idUserLogged)){
+        if (!booking.getUserId().toString().equals(idUserLogged)) {
             throw new ForbiddenException("Not have permission to review booking that belong to another user");
         }
 
-        if(booking.getRating() != null){
+        if (booking.getRating() != null) {
             throw new ForbiddenException("Booking already reviewed");
         }
 
@@ -145,10 +164,10 @@ public class BookingService {
         return responseBookingDTO;
     }
 
-    public void updateReceiptUrl(ResponseBookingDTO booking){
+    public void updateReceiptUrl(ResponseBookingDTO booking) {
         Optional<Booking> bookingFound = bookingRepository.findById(booking.getId());
 
-        if(bookingFound.isPresent()){
+        if (bookingFound.isPresent()) {
             bookingFound.get().setReceiptUrl(booking.getReceiptUrl());
             bookingRepository.save(bookingFound.get());
         }
