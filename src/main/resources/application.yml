@@ -14,7 +14,7 @@ spring:
     hibernate:
       dialect: org.hibernate.dialect.MySQLDialect
   kafka:
-    bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
+    bootstrap-servers: ${KAFKA_URL}
     consumer:
       group-id: bookings-ms
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -32,6 +32,7 @@ spring:
 eureka:
   instance:
     instance-id: ${spring.application.name}:${spring-application.instance_id:${random.value}}
+    prefer-ip-address: true
   client:
     register-with-eureka: true
     fetch-registry: true
