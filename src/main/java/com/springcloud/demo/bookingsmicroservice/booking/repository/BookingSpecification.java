@@ -14,7 +14,7 @@ import java.util.UUID;
 public class BookingSpecification {
 
     public Specification<Booking> withFilters(FilterBookingDTO filters){
-        return ((root, _, builder) -> {
+        return ((root, x, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if(filters.getUserId() != null){
