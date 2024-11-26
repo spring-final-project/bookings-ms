@@ -5,9 +5,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.KafkaAdmin.NewTopics;
 
-//@Configuration
+@Configuration
 public class TopicsConfig {
-//    @Bean
+    @Bean
     public NewTopics topics() {
         return new NewTopics(
                 TopicBuilder.name("REVIEW_CREATED_TOPIC")

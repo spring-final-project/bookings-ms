@@ -21,9 +21,16 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       auto-offset-reset: earliest
     producer:
+      bootstrap-servers: ${KAFKA_URL}
       retries: 5
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        retries: 5
+        max.block.ms: 60000
+    admin:
+      properties:
+        retries: 5
     topics:
       REVIEW_CREATED_TOPIC: REVIEW_CREATED_TOPIC
       BOOKING_CREATED_TOPIC: BOOKING_CREATED_TOPIC
