@@ -1,6 +1,6 @@
 package com.springcloud.demo.bookingsmicroservice.booking.consumer;
 
-import com.springcloud.demo.bookingsmicroservice.booking.dto.ResponseBookingDTO;
+import com.springcloud.demo.bookingsmicroservice.booking.dto.PublishBookingEventDTO;
 import com.springcloud.demo.bookingsmicroservice.booking.service.BookingService;
 import com.springcloud.demo.bookingsmicroservice.utils.JsonUtils;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ public class KafkaConsumer {
 
     @KafkaListener(topics = "${spring.kafka.topics.BOOKING_RECEIPT_GENERATED_TOPIC}")
     public void updateReceiptUrlEvent(String bookingJson){
-        ResponseBookingDTO booking = JsonUtils.fromJson(bookingJson, ResponseBookingDTO.class);
+        PublishBookingEventDTO booking = JsonUtils.fromJson(bookingJson, PublishBookingEventDTO.class);
         bookingService.updateReceiptUrl(booking);
     }
 }

@@ -11,6 +11,8 @@ import static org.assertj.core.api.Assertions.*;
 
 import com.springcloud.demo.bookingsmicroservice.client.rooms.RoomClientImpl;
 import com.springcloud.demo.bookingsmicroservice.client.rooms.dto.RoomDTO;
+import com.springcloud.demo.bookingsmicroservice.client.users.UserClientImpl;
+import com.springcloud.demo.bookingsmicroservice.client.users.UserDTO;
 import com.springcloud.demo.bookingsmicroservice.exceptions.BadRequestException;
 import com.springcloud.demo.bookingsmicroservice.exceptions.ForbiddenException;
 import com.springcloud.demo.bookingsmicroservice.exceptions.NotFoundException;
@@ -30,7 +32,11 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -46,6 +52,9 @@ class BookingServiceTest {
 
     @Mock
     private RoomClientImpl roomClient;
+
+    @Mock
+    private UserClientImpl userClient;
 
     @Mock
     private MessagingProducer messagingProducer;
@@ -68,8 +77,8 @@ class BookingServiceTest {
         void setup() {
             createBookingDTO = CreateBookingDTO
                     .builder()
-                    .checkIn(OffsetDateTime.now().toString())
-                    .checkOut(OffsetDateTime.now().toString())
+                    .checkIn(OffsetDateTime.now().plusDays(1).toString())
+                    .checkOut(OffsetDateTime.now().plusDays(3).toString())
                     .roomId(UUID.randomUUID().toString())
                     .build();
         }
@@ -89,6 +98,8 @@ class BookingServiceTest {
 
             given(bookingRepository.findBookingsByRange(any(OffsetDateTime.class), any(OffsetDateTime.class), any(UUID.class), any(UUID.class))).willReturn(Optional.empty());
             given(bookingRepository.save(any(Booking.class))).willReturn(bookingSaved);
+            given(roomClient.findById(anyString())).willReturn(new RoomDTO());
+            given(userClient.findById(any())).willReturn(new UserDTO());
             willDoNothing().given(messagingProducer).sendMessage(anyString(), anyString());
 
             ResponseBookingDTO response = bookingService.create(createBookingDTO, UUID.randomUUID().toString());
@@ -118,6 +129,19 @@ class BookingServiceTest {
 
             verify(bookingRepository).findBookingsByRange(eq(OffsetDateTime.parse(createBookingDTO.getCheckIn())), eq(OffsetDateTime.parse(createBookingDTO.getCheckOut())), any(UUID.class), eq(UUID.fromString(createBookingDTO.getRoomId())));
             verify(bookingRepository, never()).save(any(Booking.class));
+        }
+
+        @Test
+        void errorWhenCheckInIsBeforeCurrentTime() {
+            createBookingDTO.setCheckIn(OffsetDateTime.now().minusDays(2).toString());
+            createBookingDTO.setCheckOut(OffsetDateTime.now().plusDays(3).toString());
+            createBookingDTO.setRoomId(UUID.randomUUID().toString());
+
+            given(roomClient.findById(anyString())).willReturn(new RoomDTO());
+
+            BadRequestException e = Assertions.assertThrows(BadRequestException.class, () -> {
+                bookingService.create(createBookingDTO, UUID.randomUUID().toString());
+            });
         }
     }
 

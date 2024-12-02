@@ -8,6 +8,8 @@ import com.springcloud.demo.bookingsmicroservice.booking.repository.BookingRepos
 import com.springcloud.demo.bookingsmicroservice.booking.repository.BookingSpecification;
 import com.springcloud.demo.bookingsmicroservice.client.rooms.RoomClientImpl;
 import com.springcloud.demo.bookingsmicroservice.client.rooms.dto.RoomDTO;
+import com.springcloud.demo.bookingsmicroservice.client.users.UserClientImpl;
+import com.springcloud.demo.bookingsmicroservice.client.users.UserDTO;
 import com.springcloud.demo.bookingsmicroservice.exceptions.BadRequestException;
 import com.springcloud.demo.bookingsmicroservice.exceptions.ForbiddenException;
 import com.springcloud.demo.bookingsmicroservice.exceptions.NotFoundException;
@@ -19,7 +21,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
@@ -34,6 +35,7 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final BookingSpecification bookingSpecification;
     private final RoomClientImpl roomClient;
+    private final UserClientImpl userClient;
     private final MessagingProducer messagingProducer;
 
     @Value("${spring.kafka.topics.BOOKING_CREATED_TOPIC}")
@@ -44,8 +46,7 @@ public class BookingService {
 
     public ResponseBookingDTO create(CreateBookingDTO createBookingDTO, String idUserLogged) {
 
-        //        Check exist room
-        roomClient.findById(createBookingDTO.getRoomId());
+        RoomDTO room = roomClient.findById(createBookingDTO.getRoomId());
 
         OffsetDateTime checkIn;
         OffsetDateTime checkOut;
@@ -59,6 +60,10 @@ public class BookingService {
             checkOut = OffsetDateTime.parse(createBookingDTO.getCheckOut());
         } catch (DateTimeParseException e) {
             throw new BadRequestException("checkOut is not a valid date");
+        }
+
+        if(checkIn.isBefore(OffsetDateTime.now())){
+            throw new BadRequestException("checkIn cannot be before current time");
         }
 
         if (checkIn.isAfter(checkOut)) {
@@ -81,6 +86,10 @@ public class BookingService {
             }
         }
 
+        UserDTO user = userClient.findById(idUserLogged);
+        UserDTO owner = userClient.findById(room.getOwnerId());
+        room.setOwner(owner);
+
         Booking booking = BookingMapper.createBookingDtoToBooking(createBookingDTO);
         booking.setUserId(UUID.fromString(idUserLogged));
         booking.setCheckIn(checkIn);
@@ -88,11 +97,9 @@ public class BookingService {
 
         booking = bookingRepository.save(booking);
 
-        ResponseBookingDTO responseBookingDTO = BookingMapper.bookingToResponseBookingDto(booking);
+        messagingProducer.sendMessage(bookingCreatedTopic, JsonUtils.toJson(BookingMapper.bookingToPublishBookingDto(booking,room,user)));
 
-        messagingProducer.sendMessage(bookingCreatedTopic, JsonUtils.toJson(responseBookingDTO));
-
-        return responseBookingDTO;
+        return BookingMapper.bookingToResponseBookingDto(booking);
     }
 
     public List<ResponseBookingDTO> findAll(FilterBookingDTO filters) {
@@ -164,7 +171,7 @@ public class BookingService {
         return responseBookingDTO;
     }
 
-    public void updateReceiptUrl(ResponseBookingDTO booking) {
+    public void updateReceiptUrl(PublishBookingEventDTO booking) {
         Optional<Booking> bookingFound = bookingRepository.findById(booking.getId());
 
         if (bookingFound.isPresent()) {

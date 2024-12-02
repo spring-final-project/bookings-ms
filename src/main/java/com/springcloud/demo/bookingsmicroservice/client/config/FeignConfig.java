@@ -1,4 +1,4 @@
-package com.springcloud.demo.bookingsmicroservice.client.rooms.config;
+package com.springcloud.demo.bookingsmicroservice.client.config;
 
 import com.springcloud.demo.bookingsmicroservice.monitoring.XRayFeignInterceptor;
 import feign.RequestInterceptor;

@@ -75,25 +75,6 @@ class BookingControllerTest {
         }
 
         @Test
-        void errorWhenCheckInIsBeforeCurrentTime() throws Exception {
-            createBookingDTO.setCheckIn(OffsetDateTime.now().minusDays(2).toString());
-            createBookingDTO.setCheckOut(OffsetDateTime.now().plusDays(3).toString());
-            createBookingDTO.setRoomId(UUID.randomUUID().toString());
-
-            given(bookingService.create(any(CreateBookingDTO.class), anyString())).willReturn(new ResponseBookingDTO());
-
-            mockMvc.perform(
-                            MockMvcRequestBuilders
-                                    .post("/api/bookings")
-                                    .contentType(MediaType.APPLICATION_JSON)
-                                    .content(objectMapper.writeValueAsString(createBookingDTO))
-                                    .header("X-UserId", UUID.randomUUID().toString())
-                    )
-                    .andExpect(MockMvcResultMatchers.status().is(HttpStatus.BAD_REQUEST.value()))
-                    .andExpect(MockMvcResultMatchers.jsonPath("$.errors.size()").value(1));
-        }
-
-        @Test
         void errorWhenMissingFields() throws Exception {
 
             given(bookingService.create(any(CreateBookingDTO.class), anyString())).willReturn(new ResponseBookingDTO());

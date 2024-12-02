@@ -1,6 +1,6 @@
 package com.springcloud.demo.bookingsmicroservice.client.rooms;
 
-import com.springcloud.demo.bookingsmicroservice.client.rooms.config.FeignConfig;
+import com.springcloud.demo.bookingsmicroservice.client.config.FeignConfig;
 import com.springcloud.demo.bookingsmicroservice.client.rooms.dto.RoomDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

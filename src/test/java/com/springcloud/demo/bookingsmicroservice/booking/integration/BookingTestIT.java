@@ -15,6 +15,7 @@ import static org.mockito.BDDMockito.given;
 
 import com.springcloud.demo.bookingsmicroservice.client.rooms.RoomClientImpl;
 import com.springcloud.demo.bookingsmicroservice.client.rooms.dto.RoomDTO;
+import com.springcloud.demo.bookingsmicroservice.client.users.UserClientImpl;
 import com.springcloud.demo.bookingsmicroservice.messaging.MessagingProducer;
 import org.hamcrest.Matchers;
 import org.hibernate.AssertionFailure;
@@ -55,6 +56,9 @@ public class BookingTestIT {
 
     @MockBean
     private RoomClientImpl roomClient;
+
+    @MockBean
+    private UserClientImpl useClient;
 
     @MockBean
     private MessagingProducer messagingProducer;
@@ -117,6 +121,9 @@ public class BookingTestIT {
             createBookingDTO.setRoomId(UUID.randomUUID().toString());
 
             String idUserLogged = UUID.randomUUID().toString();
+
+            RoomDTO roomDTO = RoomDTO.builder().id(UUID.randomUUID()).ownerId(UUID.randomUUID().toString()).build();
+            given(roomClient.findById(anyString())).willReturn(roomDTO);
 
             MvcResult result = mockMvc
                     .perform(
