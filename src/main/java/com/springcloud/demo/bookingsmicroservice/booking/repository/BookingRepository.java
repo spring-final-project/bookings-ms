@@ -18,5 +18,5 @@ public interface BookingRepository extends JpaRepository<Booking, UUID>, JpaSpec
             "OR (?2 BETWEEN b.checkIn AND b.checkOut)) " +
             "AND b.status = BOOKED " +
             "AND (b.userId = ?3 OR b.roomId = ?4)")
-    Optional<Booking> findBookingsByRange(OffsetDateTime checkIn, OffsetDateTime checkOut, UUID userId, UUID roomId);
+    Booking[] findBookingsByRange(OffsetDateTime checkIn, OffsetDateTime checkOut, UUID userId, UUID roomId);
 }

@@ -70,18 +70,19 @@ public class BookingService {
             throw new BadRequestException("checkIn cannot be after checkOut");
         }
 
-        Optional<Booking> bookingInSameRange = bookingRepository.findBookingsByRange(
+        Booking[] bookingsInSameRange = bookingRepository.findBookingsByRange(
                 checkIn,
                 checkOut,
                 UUID.fromString(idUserLogged),
                 UUID.fromString(createBookingDTO.getRoomId())
         );
 
-        if (bookingInSameRange.isPresent()) {
-            if (bookingInSameRange.get().getUserId().toString().equals(idUserLogged)) {
+        if (bookingsInSameRange.length > 0) {
+            Booking bookingInSameRange = bookingsInSameRange[0];
+            if (bookingInSameRange.getUserId().toString().equals(idUserLogged)) {
                 throw new ForbiddenException("User already has any booking at same time");
             }
-            if (bookingInSameRange.get().getRoomId().toString().equals(createBookingDTO.getRoomId())) {
+            if (bookingInSameRange.getRoomId().toString().equals(createBookingDTO.getRoomId())) {
                 throw new ForbiddenException("Room already booked at same time");
             }
         }
